@@ -100,27 +100,9 @@ jobs:
 
           printf "warn_on_root = 1\n" >> buildozer.spec
 
-
-
-          cat buildozer.spec
-
-
-
           rm -f "$GITHUB_WORKSPACE/upload-key.jks"
 
-          keytool -genkeypair -v \
-
-            -keystore "$GITHUB_WORKSPACE/upload-key.jks" \
-
-            -keyalg RSA -keysize 2048 -validity 10000 \
-
-            -alias upload \
-
-            -storepass KaleidoPop2026 \
-
-            -keypass KaleidoPop2026 \
-
-            -dname "CN=Muhammad Abdullah, OU=GameDev, O=AbdullahStudios, L=Kamalia, S=Punjab, C=PK"
+          keytool -genkeypair -v -keystore "$GITHUB_WORKSPACE/upload-key.jks" -keyalg RSA -keysize 2048 -validity 10000 -alias upload -storepass KaleidoPop2026 -keypass KaleidoPop2026 -dname "CN=Muhammad Abdullah, OU=GameDev, O=AbdullahStudios, L=Kamalia, S=Punjab, C=PK"
 
 
 
@@ -130,15 +112,7 @@ jobs:
 
           sudo apt-get update
 
-          sudo apt-get install -y \
-
-            git zip unzip autoconf libtool pkg-config \
-
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-
-            cmake libffi-dev libssl-dev automake \
-
-            lld libltdl-dev build-essential ccache patch libstdc++6 aidl
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake lld libltdl-dev build-essential ccache patch libstdc++6 aidl
 
 
 
