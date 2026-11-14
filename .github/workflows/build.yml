@@ -26,13 +26,13 @@ jobs:
 
 
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
 
         uses: actions/setup-python@v5
 
         with:
 
-          python-version: '3.10'
+          python-version: '3.11'
 
 
 
@@ -66,7 +66,7 @@ jobs:
 
           printf "version = 1.0.0\n" >> buildozer.spec
 
-          printf "requirements = python3,kivy==2.3.0\n" >> buildozer.spec
+          printf "requirements = python3,kivy==2.3.0,pyjnius==1.6.1\n" >> buildozer.spec
 
           printf "orientation = portrait\n" >> buildozer.spec
 
@@ -92,7 +92,7 @@ jobs:
 
           printf "android.allow_backup = True\n" >> buildozer.spec
 
-          printf "p4a.branch = develop\n\n" >> buildozer.spec
+          printf "p4a.branch = master\n\n" >> buildozer.spec
 
           printf "[buildozer]\n" >> buildozer.spec
 
@@ -128,9 +128,25 @@ jobs:
 
       - name: Build Debug APK for Phone
 
+        env:
+
+          ANDROID_HOME: ""
+
+          ANDROID_SDK_ROOT: ""
+
+          ANDROID_NDK: ""
+
+          ANDROID_NDK_HOME: ""
+
+          ANDROID_NDK_ROOT: ""
+
+          ANDROID_NDK_LATEST_HOME: ""
+
+          GRADLE_HOME: ""
+
         run: |
 
-          yes | python -m buildozer android debug
+          python -m buildozer android debug
 
 
 
@@ -152,6 +168,20 @@ jobs:
 
         env:
 
+          ANDROID_HOME: ""
+
+          ANDROID_SDK_ROOT: ""
+
+          ANDROID_NDK: ""
+
+          ANDROID_NDK_HOME: ""
+
+          ANDROID_NDK_ROOT: ""
+
+          ANDROID_NDK_LATEST_HOME: ""
+
+          GRADLE_HOME: ""
+
           P4A_RELEASE_KEYSTORE: ${{ github.workspace }}/upload-key.jks
 
           P4A_RELEASE_KEYSTORE_PASSWD: KaleidoPop2026
@@ -162,7 +192,7 @@ jobs:
 
         run: |
 
-          yes | python -m buildozer android release
+          python -m buildozer android release
 
           mkdir -p bin
 
