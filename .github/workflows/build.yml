@@ -1,0 +1,20 @@
+name: Build Android AAB
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Debug APK & Release AAB
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android debug release
+          buildozer_version: stable
+      - name: Upload Built Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-packages
+          path: bin/*
