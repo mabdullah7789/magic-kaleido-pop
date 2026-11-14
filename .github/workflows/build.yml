@@ -48,69 +48,61 @@ jobs:
 
 
 
-      - name: Configure buildozer.spec & Generate Keystore
+      - name: Configure buildozer.spec and Generate Keystore
 
         run: |
 
-          if [ -f "buildozer_spec.txt" ] && [ ! -f "buildozer.spec" ]; then
+          printf "[app]\n" > buildozer.spec
 
-            cp buildozer_spec.txt buildozer.spec
+          printf "title = Magic Kaleido-Pop Studio\n" >> buildozer.spec
 
-          fi
+          printf "package.name = kaleidopop\n" >> buildozer.spec
 
-          cat << 'EOF' > buildozer.spec
+          printf "package.domain = org.abdullahstudios\n" >> buildozer.spec
 
-          [app]
+          printf "source.dir = .\n" >> buildozer.spec
 
-          title = Magic Kaleido-Pop Studio
+          printf "source.include_exts = py,png,jpg,kv,atlas,json\n" >> buildozer.spec
 
-          package.name = kaleidopop
+          printf "version = 1.0.0\n" >> buildozer.spec
 
-          package.domain = org.abdullahstudios
+          printf "requirements = python3,kivy==2.3.0\n" >> buildozer.spec
 
-          source.dir = .
+          printf "orientation = portrait\n" >> buildozer.spec
 
-          source.include_exts = py,png,jpg,kv,atlas,json
+          printf "fullscreen = 1\n" >> buildozer.spec
 
-          version = 1.0.0
+          printf "android.presplash_color = #0D0D1A\n" >> buildozer.spec
 
-          requirements = python3,kivy==2.3.0
+          printf "android.api = 34\n" >> buildozer.spec
 
-          orientation = portrait
+          printf "android.minapi = 24\n" >> buildozer.spec
 
-          fullscreen = 1
+          printf "android.ndk = 25b\n" >> buildozer.spec
 
-          android.presplash_color = #0D0D1A
+          printf "android.accept_sdk_license = True\n" >> buildozer.spec
 
-          android.api = 34
+          printf "android.archs = arm64-v8a\n" >> buildozer.spec
 
-          android.minapi = 24
+          printf "android.release_artifact = aab\n" >> buildozer.spec
 
-          android.ndk = 25b
+          printf "android.debug_artifact = apk\n" >> buildozer.spec
 
-          android.accept_sdk_license = True
+          printf "android.permissions =\n" >> buildozer.spec
 
-          android.archs = arm64-v8a
+          printf "android.allow_backup = True\n" >> buildozer.spec
 
-          android.release_artifact = aab
+          printf "p4a.branch = develop\n\n" >> buildozer.spec
 
-          android.debug_artifact = apk
+          printf "[buildozer]\n" >> buildozer.spec
 
-          android.permissions =
+          printf "log_level = 2\n" >> buildozer.spec
 
-          android.allow_backup = True
-
-          p4a.branch = develop
+          printf "warn_on_root = 1\n" >> buildozer.spec
 
 
 
-          [buildozer]
-
-          log_level = 2
-
-          warn_on_root = 1
-
-          EOF
+          cat buildozer.spec
 
 
 
@@ -154,23 +146,9 @@ jobs:
 
         run: |
 
-          pip install --upgrade "pip<24.1" "setuptools<70.0.0" wheel
+          python -m pip install --upgrade "pip<24.1" "setuptools<70.0.0" wheel
 
-          pip install git+https://github.com/kivy/buildozer.git@master cython==0.29.36 virtualenv packaging appdirs
-
-
-
-      - name: Pre-Accept Android SDK Licenses & Install SDK 34 + Build-Tools
-
-        run: |
-
-          if [ -d "$ANDROID_HOME" ]; then
-
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" || true
-
-          fi
+          python -m pip install buildozer==1.5.0 cython==0.29.36 virtualenv packaging appdirs
 
 
 
@@ -178,7 +156,7 @@ jobs:
 
         run: |
 
-          yes | buildozer android debug
+          yes | python -m buildozer android debug
 
 
 
@@ -210,7 +188,9 @@ jobs:
 
         run: |
 
-          yes | buildozer android release
+          yes | python -m buildozer android release
+
+          mkdir -p bin
 
           cp "$GITHUB_WORKSPACE/upload-key.jks" bin/upload-key.jks
 
