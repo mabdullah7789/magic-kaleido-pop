@@ -1,20 +1,79 @@
 name: Build Android AAB
+
 on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - name: Build Debug APK & Release AAB
-        uses: ArtemSBulgakov/buildozer-action@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify files in repository root
+        run: |
+          ls -la
+          if [ -f "buildozer_spec.txt" ] && [ ! -f "buildozer.spec" ]; then
+            cp buildozer_spec.txt buildozer.spec
+          fi
+          test -f main.py || (echo "ERROR: main.py is missing from the repository root!" && exit 1)
+          test -f buildozer.spec || (echo "ERROR: buildozer.spec is missing from the repository root!" && exit 1)
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          command: buildozer android debug release
-          buildozer_version: stable
-      - name: Upload Built Files
+          python-version: '3.11'
+
+      - name: Set up Java JDK 17 (Required for Android Gradle & AAB)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Linux System Dependencies for Buildozer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev automake \
+            lld libltdl-dev build-essential ccache
+
+      - name: Install Buildozer & Cython
+        run: |
+          pip install --upgrade pip
+          pip install buildozer==1.5.0 cython==0.29.36 virtualenv packaging
+
+      - name: Build Debug APK for Phone Testing
+        run: |
+          yes | buildozer android debug
+
+      - name: Build Release AAB & Sign with Upload Keystore
+        run: |
+          yes | buildozer android release
+          keytool -genkeypair -v \
+            -keystore upload-key.jks \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -alias upload \
+            -storepass KaleidoPop2026! \
+            -keypass KaleidoPop2026! \
+            -dname "CN=Muhammad Abdullah, OU=GameDev, O=AbdullahStudios, L=Kamalia, S=Punjab, C=PK"
+          AAB_FILE=$(ls bin/*.aab | head -n 1)
+          jarsigner -verbose \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore upload-key.jks \
+            -storepass KaleidoPop2026! \
+            -keypass KaleidoPop2026! \
+            "$AAB_FILE" upload
+          cp upload-key.jks bin/upload-key.jks
+
+      - name: Upload Built APK, Signed AAB & Keystore
         uses: actions/upload-artifact@v4
         with:
           name: android-packages
-          path: bin/*
+          path: |
+            bin/*.apk
+            bin/*.aab
+            bin/upload-key.jks
