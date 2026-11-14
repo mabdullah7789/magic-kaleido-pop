@@ -26,45 +26,7 @@ jobs:
 
 
 
-      - name: Prepare buildozer.spec & Keystore
-
-        run: |
-
-          if [ -f "buildozer_spec.txt" ] && [ ! -f "buildozer.spec" ]; then
-
-            cp buildozer_spec.txt buildozer.spec
-
-          fi
-
-          # Remove p4a.branch = master so Buildozer uses its stable tested release
-
-          sed -i 's/^p4a.branch = master/# p4a.branch = master/g' buildozer.spec
-
-          # Ensure stable Android API 34/35 and NDK 25b
-
-          sed -i 's/^android.api = 36/android.api = 34/g' buildozer.spec
-
-          
-
-          # Generate upload keystore BEFORE buildozer runs so Gradle can sign the AAB
-
-          keytool -genkeypair -v \
-
-            -keystore "$GITHUB_WORKSPACE/upload-key.jks" \
-
-            -keyalg RSA -keysize 2048 -validity 10000 \
-
-            -alias upload \
-
-            -storepass KaleidoPop2026! \
-
-            -keypass KaleidoPop2026! \
-
-            -dname "CN=Muhammad Abdullah, OU=GameDev, O=AbdullahStudios, L=Kamalia, S=Punjab, C=PK"
-
-
-
-      - name: Set up Python 3.10 (Most Stable for Kivy + Pyjnius Cython)
+      - name: Set up Python 3.10
 
         uses: actions/setup-python@v5
 
@@ -86,23 +48,53 @@ jobs:
 
 
 
-      - name: Cache Buildozer Android SDK/NDK (Speeds up re-runs!)
+      - name: Prepare buildozer.spec and Upload Keystore
 
-        uses: actions/cache@v4
+        run: |
 
-        with:
+          ls -la
 
-          path: |
+          if [ -f "buildozer_spec.txt" ] && [ ! -f "buildozer.spec" ]; then
 
-            ~/.buildozer
+            cp buildozer_spec.txt buildozer.spec
 
-            .buildozer
+          fi
 
-          key: buildozer-v1-${{ hashFiles('buildozer.spec') }}
+          if [ ! -f "buildozer.spec" ]; then
 
-          restore-keys: |
+            echo "ERROR: buildozer.spec is missing from repository root!"
 
-            buildozer-v1-
+            exit 1
+
+          fi
+
+          if [ ! -f "main.py" ]; then
+
+            echo "ERROR: main.py is missing from repository root!"
+
+            exit 1
+
+          fi
+
+          sed -i 's/^p4a.branch = master/# p4a.branch = master/g' buildozer.spec
+
+          sed -i 's/^android.api = 36/android.api = 34/g' buildozer.spec
+
+          rm -f "$GITHUB_WORKSPACE/upload-key.jks"
+
+          keytool -genkeypair -v \
+
+            -keystore "$GITHUB_WORKSPACE/upload-key.jks" \
+
+            -keyalg RSA -keysize 2048 -validity 10000 \
+
+            -alias upload \
+
+            -storepass KaleidoPop2026 \
+
+            -keypass KaleidoPop2026 \
+
+            -dname "CN=Muhammad Abdullah, OU=GameDev, O=AbdullahStudios, L=Kamalia, S=Punjab, C=PK"
 
 
 
@@ -124,7 +116,7 @@ jobs:
 
 
 
-      - name: Install Buildozer & Cython
+      - name: Install Buildozer and Cython
 
         run: |
 
@@ -134,7 +126,7 @@ jobs:
 
 
 
-      - name: Build Debug APK (for immediate phone testing)
+      - name: Build Debug APK for Phone
 
         run: |
 
@@ -142,7 +134,7 @@ jobs:
 
 
 
-      - name: Upload Debug APK Immediately
+      - name: Upload Debug APK
 
         if: always()
 
@@ -156,15 +148,15 @@ jobs:
 
 
 
-      - name: Build & Sign Release AAB (for Google Play Store)
+      - name: Build and Sign Release AAB for Play Store
 
         env:
 
           P4A_RELEASE_KEYSTORE: ${{ github.workspace }}/upload-key.jks
 
-          P4A_RELEASE_KEYSTORE_PASSWD: KaleidoPop2026!
+          P4A_RELEASE_KEYSTORE_PASSWD: KaleidoPop2026
 
-          P4A_RELEASE_KEYALIAS_PASSWD: KaleidoPop2026!
+          P4A_RELEASE_KEYALIAS_PASSWD: KaleidoPop2026
 
           P4A_RELEASE_KEYALIAS: upload
 
@@ -176,7 +168,7 @@ jobs:
 
 
 
-      - name: Upload Play Store AAB & Keystore
+      - name: Upload Play Store AAB and Keystore
 
         if: always()
 
